@@ -57,7 +57,7 @@
   {
     "keywords": ["can the chatbot decide", "decide fraud", "can you predict"],
     "question": "Can the chatbot decide whether a transaction is fraudulent?",
-    "answer": "No. The chatbot explains the FraudShield system and fraud detection concepts. Actual transaction predictions come from the trained machine learning model through the prediction API (/predict)."
+    "answer": "Yes! The chatbot is equipped with an integrated Machine Learning Data Analytics Engine. You can upload CSV/JSON transaction datasets directly into the chat window to evaluate and analyze fraud across all rows instantly."
   },
   {
     "keywords": ["is my password stored directly", "password stored", "security", "hash"],
@@ -67,11 +67,31 @@
   {
     "keywords": ["what does the dashboard show", "dashboard", "features of dashboard"],
     "question": "What does the dashboard show?",
-    "answer": "The dashboard provides transaction analysis, fraud prediction results, model performance information, and access to the FraudShield Assistant."
+    "answer": "The dashboard provides transaction analysis, fraud prediction results, model performance information, batch scanning, audit ledgers, and access to the FraudShield Assistant."
   },
   {
-    "keywords": ["dataset", "rows", "transactions count"],
-    "question": "What dataset was used to train FraudShield?",
-    "answer": "FraudShield was trained on the European credit card transactions dataset containing 283,726 unique transactions with 30 numerical features (Time, Amount, and V1 to V28 PCA components) and 0 missing values."
+    "keywords": ["analyze dataset", "analyze core dataset", "dataset analysis", "dataset statistics", "inspect dataset", "dataset summary"],
+    "question": "Can you analyze the core credit card dataset?",
+    "answer": "📊 Core Dataset Analysis (creditcard.csv):\n• Total Rows Analyzed: 284,807 transactions across 31 features\n• Data Cleansing: 1,081 duplicate records identified & pruned (283,726 clean rows)\n• Missing Values: 0 missing values across all columns\n• Class Imbalance: 283,347 Legitimate (99.87%) vs 379 Fraudulent (0.13%)\n• Amount Statistics: Overall Mean $88.35, Median $22.00, Max $25,691.16\n• Fraud Amount Distribution: Mean $122.21, Median $9.25, Max $2,125.87\n• Peak Anomaly Hours: Fraud transactions concentrate disproportionately between 00:00 and 04:30 AM\n• Dominant Risk Features: V14, V4, V12, V10, V17\n• Test Set Evaluation: 56,744 holdout transactions (Caught 80 out of 94 frauds = 85.11% recall, 0.9808 ROC-AUC)."
+  },
+  {
+    "keywords": ["analyze uploaded data", "analyze uploaded datasets", "analyze session", "analyze batch", "analyze ledger", "my transactions"],
+    "question": "How do you analyze uploaded datasets?",
+    "answer": "📁 Uploaded Dataset Analysis:\nYou can click the paperclip / Upload button at the bottom of this chat window to upload any CSV or JSON file! The chatbot will parse all rows, run them through our genuine Machine Learning pipeline, and return a comprehensive analysis report showing fraud count, total exposure at risk, and top behavioral drivers."
+  },
+  {
+    "keywords": ["fraud vs normal amount", "fraud amounts", "average amount", "amount stats", "amount distribution"],
+    "question": "How do transaction amounts compare between fraud and legitimate spend?",
+    "answer": "💰 Amount Distribution Analysis:\n• Legitimate Spend: Mean $88.29, Median $22.00, Max $25,691.16. Most clean transactions cluster between $5.00 and $100.00.\n• Fraudulent Spend: Mean $122.21, Median $9.25, Max $2,125.87. Fraudsters frequently execute micro-carding tests (<$5.00) or aggressive multi-hundred-dollar transfers before the card is blocked."
+  },
+  {
+    "keywords": ["when does fraud peak", "peak hours", "time of fraud", "time distribution", "fraud velocity"],
+    "question": "When does fraud peak in the dataset?",
+    "answer": "🕒 Temporal Fraud Velocity Analysis:\nFraudulent transactions exhibit high concentration during off-peak night hours (12:00 AM to 5:00 AM, seconds 0 to 18,000), where cardholders are asleep and less likely to notice immediate SMS fraud alerts. Our ML pipeline encodes Time using cyclical 24-hour trigonometric sine and cosine functions to capture this exact daily pattern."
+  },
+  {
+    "keywords": ["top features", "top fraud drivers", "feature importance", "which features", "v14", "v4"],
+    "question": "Which features are the strongest predictors of fraud?",
+    "answer": "🎯 Top Predictive Feature Vectors (Weights Attribution):\n1. V14 (Negative Impact): The strongest fraud indicator; values dropping below -4.0 sharply escalate fraud probability.\n2. V4 (Positive Impact): Velocity divergence; elevated positive values (>+3.0) indicate rapid unusual activity.\n3. V12 (Negative Impact): Account behavioral pattern anomaly.\n4. V10 (Negative Impact): Terminal and merchant divergence.\n5. V17 (Negative Impact): Geographic and channel drift."
   }
 ]

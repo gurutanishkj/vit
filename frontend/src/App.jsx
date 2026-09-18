@@ -215,8 +215,13 @@ export default function App() {
         />
       </main>
 
-      {/* Floating Chatbot Assistant Widget */}
-      <Chatbot isOpen={isChatOpen} setIsOpen={setIsChatOpen} />
+      {/* Floating Chatbot Assistant Widget with Dataset Analytics */}
+      <Chatbot 
+        isOpen={isChatOpen} 
+        setIsOpen={setIsChatOpen} 
+        logs={logs}
+        onDatasetUploaded={(newRows) => setLogs(prev => [...newRows, ...prev])}
+      />
 
       {/* Optional Auth Modal (Sign In / Register) */}
       {showAuthModal && (
