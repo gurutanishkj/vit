@@ -4,6 +4,7 @@ import TransactionForm from '../components/TransactionForm';
 import BatchScanner from '../components/BatchScanner';
 import ModelInfo from '../components/ModelInfo';
 import AuditLog from '../components/AuditLog';
+import DatasetAuditor from '../components/DatasetAuditor';
 import { Shield, Sparkles, Layers, Sliders, ArrowUpRight, Cpu } from 'lucide-react';
 
 export default function Dashboard({ 
@@ -68,6 +69,11 @@ export default function Dashboard({
             />
           </div>
         </div>
+      )}
+
+      {/* Tab: Dataset Auditor & 284,807 Duplicate Finder */}
+      {activeTab === 'dataset' && (
+        <DatasetAuditor />
       )}
 
       {/* Tab 2: Batch Scanner */}

@@ -1,12 +1,13 @@
 import React from 'react';
 import { 
   Shield, Sliders, Layers, Cpu, ClipboardList, MessageSquare, 
-  LogOut, User, LogIn, Activity
+  LogOut, User, LogIn, Activity, Database
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, user, onLogout, onOpenAuthModal }) {
   const navItems = [
     { id: 'dashboard', label: 'Control Center', icon: Sliders },
+    { id: 'dataset', label: 'Dataset (284,807)', icon: Database },
     { id: 'batch', label: 'Batch Scanner', icon: Layers },
     { id: 'model', label: 'Model Intelligence', icon: Cpu },
     { id: 'audit', label: 'Audit Ledger', icon: ClipboardList },

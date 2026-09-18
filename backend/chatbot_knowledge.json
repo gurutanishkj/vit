@@ -93,5 +93,10 @@
     "keywords": ["top features", "top fraud drivers", "feature importance", "which features", "v14", "v4"],
     "question": "Which features are the strongest predictors of fraud?",
     "answer": "🎯 Top Predictive Feature Vectors (Weights Attribution):\n1. V14 (Negative Impact): The strongest fraud indicator; values dropping below -4.0 sharply escalate fraud probability.\n2. V4 (Positive Impact): Velocity divergence; elevated positive values (>+3.0) indicate rapid unusual activity.\n3. V12 (Negative Impact): Account behavioral pattern anomaly.\n4. V10 (Negative Impact): Terminal and merchant divergence.\n5. V17 (Negative Impact): Geographic and channel drift."
+  },
+  {
+    "keywords": ["duplicate", "duplicates", "find duplicate", "find duplicates", "duplicate records", "284807 duplicates", "duplicate in dataset"],
+    "question": "How many duplicate records are in the 284,807 dataset and what are they?",
+    "answer": "🔍 Duplicate Analysis on 284,807 Transactions (creditcard.csv):\n• Total Dataset Records: 284,807\n• Total Duplicates Identified: 1,081 duplicate rows across all 31 features\n• Fraud Duplicates: 19 records (e.g. repeated $1.00 carding bot replay attacks at Time 68207)\n• Legitimate Duplicates: 1,062 records (e.g. repeated $7.56 gateway retry attempts at Time 163152, repeated up to 18 times)\n• Deduplicated Clean Training Set: 283,726 unique transactions\n• Prevention of Data Leakage: Deduplication ensures identical transactions do not appear in both train and test splits, guaranteeing legitimate 85.11% recall.\n\nYou can also explore all duplicate clusters visually in the 'Dataset (284,807)' tab on the navigation bar!"
   }
 ]
