@@ -1,25 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu, CheckCircle, BarChart3, Database, ShieldAlert, Sparkles, Image as ImageIcon } from 'lucide-react';
+import modelData from '../model_weights.json';
+
+const defaultModelInfo = {
+  model_name: modelData.metrics?.model_name || 'Balanced Logistic Regression',
+  number_of_features: modelData.feature_columns?.length || 31,
+  test_dataset_size: 56744,
+  precision: modelData.metrics?.precision || 0.2597,
+  recall: modelData.metrics?.recall || 0.8511,
+  f1_score: modelData.metrics?.f1_score || 0.398,
+  roc_auc: modelData.metrics?.roc_auc || 0.9808,
+  pr_auc: modelData.metrics?.pr_auc || 0.6607,
+  confusion_matrix: modelData.metrics?.confusion_matrix || {
+    true_negatives: 56422,
+    false_positives: 228,
+    false_negatives: 14,
+    true_positives: 80
+  },
+};
 
 export default function ModelInfo() {
-  const [info, setInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [info, setInfo] = useState(defaultModelInfo);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeChart, setActiveChart] = useState('roc');
 
   useEffect(() => {
     fetch('/model-info')
       .then(res => {
-        if (!res.ok) throw new Error('Failed to load model metrics');
+        if (!res.ok) throw new Error('API unavailable');
         return res.json();
       })
       .then(data => {
         setInfo(data);
-        setLoading(false);
       })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
+      .catch(() => {
+        setInfo(defaultModelInfo);
       });
   }, []);
 

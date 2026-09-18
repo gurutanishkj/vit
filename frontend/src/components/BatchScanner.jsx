@@ -4,6 +4,7 @@ import {
   RefreshCw, DollarSign, BarChart3, UploadCloud, Layers
 } from 'lucide-react';
 import ThresholdSlider from './ThresholdSlider';
+import { batchPredictClientSide } from '../clientPrediction';
 
 export default function BatchScanner({ token, onBatchEvaluated }) {
   const [threshold, setThreshold] = useState(0.70);
@@ -38,15 +39,21 @@ export default function BatchScanner({ token, onBatchEvaluated }) {
         threshold: threshold,
       };
 
-      const res = await fetch('/batch-predict', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      });
+      let data;
+      try {
+        const res = await fetch('/batch-predict', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Batch scan failed. Check backend status.');
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          data = batchPredictClientSide(payload.transactions, payload.threshold);
+        }
+      } catch {
+        data = batchPredictClientSide(payload.transactions, payload.threshold);
       }
 
       setBatchData(data);

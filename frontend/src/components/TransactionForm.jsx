@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ResultCard from './ResultCard';
 import ThresholdSlider from './ThresholdSlider';
+import { predictClientSide } from '../clientPrediction';
 
 export default function TransactionForm({ token, onTransactionEvaluated }) {
   // Base fields
@@ -143,20 +144,28 @@ export default function TransactionForm({ token, onTransactionEvaluated }) {
         payload[`V${i}`] = parseFloat(vFeatures[`V${i}`]) || 0.0;
       }
 
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      let data;
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
 
-      const res = await fetch('/predict', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      });
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Prediction failed. Please ensure the backend is running.');
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          // Static host without backend (e.g. GitHub Pages)
+          data = predictClientSide(payload, payload.threshold);
+        }
+      } catch {
+        // Network error / offline / GitHub Pages
+        data = predictClientSide(payload, payload.threshold);
       }
 
       setResult(data);

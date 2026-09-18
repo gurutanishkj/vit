@@ -1,5 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, X, Bot, User, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
+import localKB from '../chatbot_knowledge.json';
+
+function findLocalAnswer(query) {
+  const qLower = query.toLowerCase().trim();
+  const qWords = qLower.replace(/[?!.]/g, '').split(/\s+/);
+  const stopWords = new Set(["what", "is", "the", "a", "an", "of", "to", "in", "on", "for", "how", "does", "do", "can", "you", "my"]);
+  const meaningfulWords = qWords.filter(w => !stopWords.has(w));
+
+  for (const entry of localKB) {
+    for (const kw of (entry.keywords || [])) {
+      if (qLower.includes(kw.toLowerCase())) {
+        return entry.answer;
+      }
+    }
+  }
+
+  let bestAnswer = null;
+  let maxScore = 0;
+  for (const entry of localKB) {
+    const entryWords = entry.question.toLowerCase().replace(/[?!.]/g, '').split(/\s+/);
+    const overlap = meaningfulWords.filter(w => entryWords.includes(w)).length;
+    if (overlap > maxScore && overlap >= 1) {
+      maxScore = overlap;
+      bestAnswer = entry.answer;
+    }
+  }
+
+  return bestAnswer || "I'm FraudShield Assistant. I can help you understand FraudShield, fraud detection, the machine learning model, transaction analysis, the API, and the dashboard.";
+}
 
 export default function Chatbot({ isOpen, setIsOpen }) {
   const [messages, setMessages] = useState([
@@ -38,26 +67,23 @@ export default function Chatbot({ isOpen, setIsOpen }) {
     if (!messageText) setInput('');
     setLoading(true);
 
+    let replyText;
     try {
       const res = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: query }),
       });
-
-      const data = await res.json();
-      const replyText = data.reply || "I'm FraudShield Assistant. I can help you understand FraudShield, fraud detection, the machine learning model, transaction analysis, the API, and the dashboard.";
-
-      setMessages((prev) => [...prev, { role: 'assistant', text: replyText }]);
+      if (res.ok) {
+        const data = await res.json();
+        replyText = data.reply;
+      } else {
+        replyText = findLocalAnswer(query);
+      }
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          text: "I'm FraudShield Assistant. I can help you understand FraudShield, fraud detection, the machine learning model, transaction analysis, the API, and the dashboard.",
-        },
-      ]);
+      replyText = findLocalAnswer(query);
     } finally {
+      setMessages((prev) => [...prev, { role: 'assistant', text: replyText || findLocalAnswer(query) }]);
       setLoading(false);
     }
   };
