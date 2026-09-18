@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   MessageSquare, Send, X, Bot, User, Sparkles, Paperclip, 
   FileText, UploadCloud, CheckCircle2, AlertTriangle, ShieldAlert, BarChart2,
-  Volume2, VolumeX
+  Volume2, VolumeX, MapPin, Compass
 } from 'lucide-react';
 import localKB from '../chatbot_knowledge.json';
 import datasetStats from '../dataset_stats.json';
+import hotspotData from '../fraud_hotspots.json';
 import { predictClientSide } from '../clientPrediction';
 
 function findLocalAnswer(query, logs = []) {
@@ -63,6 +64,82 @@ function findLocalAnswer(query, logs = []) {
       `💡 Verdict: ${highCount > 0 ? `Detected ${highCount} severe anomaly events requiring immediate intervention.` : 'All session activity aligns with safe consumer spending patterns.'}`;
   }
 
+  // Geospatial Hotspot & Credit Card Transfer Location Query
+  if (
+    qLower.includes('locate') || 
+    qLower.includes('location') || 
+    qLower.includes('where') || 
+    qLower.includes('hotspot') || 
+    qLower.includes('transfer') || 
+    qLower.includes('impossible travel') ||
+    qLower.includes('corridor') ||
+    qLower.includes('radar') ||
+    qLower.includes('gps') ||
+    qLower.includes('coordinates')
+  ) {
+    // Check if user is asking about impossible travel speed
+    if (qLower.includes('impossible') || qLower.includes('speed') || qLower.includes('velocity')) {
+      const impTransfers = hotspotData.transfers.filter(t => t.is_impossible_travel);
+      const topImp = impTransfers[0] || hotspotData.transfers[0];
+      return {
+        text: `🌍 Impossible Travel Velocity Alerts (${impTransfers.length} detected):\n\n` +
+          `• Primary Anomaly: Transfer ${topImp.transfer_id} (${topImp.transfer_type})\n` +
+          `• Routing Corridor: ${topImp.origin.city}, ${topImp.origin.country} ➔ ${topImp.destination.city}, ${topImp.destination.country}\n` +
+          `• Distance & Time: ${topImp.distance_km} km in ${topImp.time_elapsed_min} minutes\n` +
+          `• Transit Velocity: ${topImp.velocity_kmh.toLocaleString()} km/h (Physically impossible commercial transit >900 km/h!)\n` +
+          `• Amount: $${topImp.amount.toFixed(2)} | Fraud Probability: ${(topImp.fraud_probability * 100).toFixed(1)}%\n` +
+          `• Machine Learning Action: ${topImp.recommended_action}\n\n` +
+          `Click below to pinpoint and highlight this transfer on the interactive Hotspot Map!`,
+        transfer_id: topImp.transfer_id
+      };
+    }
+
+    // Check if user is asking about a specific city or destination
+    const cities = ["london", "paris", "frankfurt", "zurich", "amsterdam", "new york", "san francisco", "miami", "singapore", "hong kong", "tokyo", "dubai", "george town", "belize", "limassol", "lagos", "moscow"];
+    const matchedCity = cities.find(c => qLower.includes(c));
+
+    let matchedTransfer = null;
+    if (matchedCity) {
+      matchedTransfer = hotspotData.transfers.find(t => 
+        t.origin.city.toLowerCase().includes(matchedCity) || 
+        t.destination.city.toLowerCase().includes(matchedCity)
+      );
+    }
+
+    if (matchedTransfer) {
+      return {
+        text: `📍 Located Credit Card Transfer for ${matchedTransfer.origin.city} ➔ ${matchedTransfer.destination.city}:\n\n` +
+          `• Transfer ID: ${matchedTransfer.transfer_id} (${matchedTransfer.transfer_type})\n` +
+          `• Origin: ${matchedTransfer.origin.city}, ${matchedTransfer.origin.country} [Lat: ${matchedTransfer.origin.lat.toFixed(2)}, Lon: ${matchedTransfer.origin.lon.toFixed(2)}]\n` +
+          `• Destination: ${matchedTransfer.destination.city}, ${matchedTransfer.destination.country} [Lat: ${matchedTransfer.destination.lat.toFixed(2)}, Lon: ${matchedTransfer.destination.lon.toFixed(2)}]\n` +
+          `• Distance & Time: ${matchedTransfer.distance_km} km (${matchedTransfer.time_elapsed_min} minutes window)\n` +
+          `• Velocity: ${matchedTransfer.velocity_kmh.toLocaleString()} km/h ${matchedTransfer.is_impossible_travel ? '⚠️ (Impossible Travel)' : '✅ (Normal Transit)'}\n` +
+          `• Amount: $${matchedTransfer.amount.toFixed(2)}\n` +
+          `• Risk Level: ${matchedTransfer.risk_level} (${(matchedTransfer.fraud_probability * 100).toFixed(1)}%)\n` +
+          `• Action: ${matchedTransfer.recommended_action}\n` +
+          `• Latent Vector Anomaly: V14=${matchedTransfer.latent_signals.v14}, V4=${matchedTransfer.latent_signals.v4}\n\n` +
+          `Click below to view this transfer in the Hotspot Map!`,
+        transfer_id: matchedTransfer.transfer_id
+      };
+    }
+
+    // Default overview of hotspots and flagged transfers
+    const criticalHotspots = hotspotData.hotspots.filter(h => h.severity === 'CRITICAL');
+    const topHighRisk = hotspotData.transfers.find(t => t.is_fraud) || hotspotData.transfers[0];
+
+    return {
+      text: `🗺️ Credit Card Transfer Geospatial Intelligence:\n\n` +
+        `• Monitored Global Corridors: ${hotspotData.summary.total_monitored_transfers} active transfer routes\n` +
+        `• Critical Risk Hotspots: ${hotspotData.summary.high_risk_hotspots} hubs (${criticalHotspots.map(h => h.city + ' [' + h.fraud_rate_pct + '% fraud]').join(', ')})\n` +
+        `• Impossible Travel Alerts: ${hotspotData.summary.impossible_travel_alerts} velocity spikes (>900 km/h)\n` +
+        `• Total Monitored Volume: $${hotspotData.summary.total_monitored_volume.toLocaleString('en-US', { minimumFractionDigits: 2 })}\n` +
+        `• Capital at Risk: $${hotspotData.summary.capital_at_risk.toLocaleString('en-US', { minimumFractionDigits: 2 })}\n\n` +
+        `📍 Top Flagged Transfer: ${topHighRisk.transfer_id} ($${topHighRisk.amount.toFixed(2)}) from ${topHighRisk.origin.city} to ${topHighRisk.destination.city} at ${topHighRisk.velocity_kmh.toLocaleString()} km/h (${topHighRisk.risk_level} Risk).\n\n` +
+        `Click below to inspect the complete Hotspot Map!`,
+      transfer_id: topHighRisk.transfer_id
+    };
+  }
+
   // Token / keyword matching across knowledge base
   const qWords = qLower.replace(/[?!.]/g, '').split(/\s+/);
   const stopWords = new Set(["what", "is", "the", "a", "an", "of", "to", "in", "on", "for", "how", "does", "do", "can", "you", "my"]);
@@ -90,11 +167,11 @@ function findLocalAnswer(query, logs = []) {
   return bestAnswer || "I'm FraudShield Assistant. I can analyze uploaded datasets, explain fraud metrics (Recall, ROC-AUC), inspect transaction features, and provide statistical insights on the financial dataset.";
 }
 
-export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploaded }) {
+export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploaded, onFocusTransfer }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: "👋 Hello! I'm FraudShield Assistant. I can perform deep statistical analysis on the core 284,807-transaction dataset, evaluate any uploaded CSV/JSON datasets, and explain fraud detection metrics.",
+      text: "👋 Hello! I'm FraudShield Assistant. I can locate credit card transfers on the global hotspot map, analyze dataset distributions, evaluate uploaded CSV files, and explain fraud detection metrics.",
     },
   ]);
   const [input, setInput] = useState('');
@@ -112,12 +189,12 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
   const fileInputRef = useRef(null);
 
   const quickQuestions = [
+    '🗺️ Locate Hotspots',
+    '📍 Impossible Travel Speed',
     '📊 Analyze Core Dataset',
     '📁 Analyze Uploaded Data',
     '💰 Fraud vs Normal Amounts',
-    '🕒 When Does Fraud Peak?',
     '🎯 Top 5 Predictive Signals',
-    'What is recall?',
   ];
 
   const scrollToBottom = () => {
@@ -208,7 +285,9 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
     if (!messageText) setInput('');
     setLoading(true);
 
-    let replyText;
+    let replyText = null;
+    let replyTransferId = null;
+
     try {
       const res = await fetch('/chat', {
         method: 'POST',
@@ -218,17 +297,42 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
       if (res.ok) {
         const data = await res.json();
         replyText = data.reply;
+        replyTransferId = data.transfer_id || null;
       } else {
-        replyText = findLocalAnswer(query, logs);
+        const localAns = findLocalAnswer(query, logs);
+        if (typeof localAns === 'object' && localAns !== null) {
+          replyText = localAns.text;
+          replyTransferId = localAns.transfer_id || null;
+        } else {
+          replyText = localAns;
+        }
       }
     } catch {
-      replyText = findLocalAnswer(query, logs);
+      const localAns = findLocalAnswer(query, logs);
+      if (typeof localAns === 'object' && localAns !== null) {
+        replyText = localAns.text;
+        replyTransferId = localAns.transfer_id || null;
+      } else {
+        replyText = localAns;
+      }
     } finally {
-      const finalReply = replyText || findLocalAnswer(query, logs);
-      setMessages((prev) => [...prev, { role: 'assistant', text: finalReply }]);
+      if (!replyText) {
+        const localAns = findLocalAnswer(query, logs);
+        if (typeof localAns === 'object' && localAns !== null) {
+          replyText = localAns.text;
+          replyTransferId = localAns.transfer_id || null;
+        } else {
+          replyText = localAns;
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev, 
+        { role: 'assistant', text: replyText, transfer_id: replyTransferId }
+      ]);
       setLoading(false);
       if (isVoiceEnabled) {
-        speakText(finalReply, messages.length + 1);
+        speakText(replyText, messages.length + 1);
       }
     }
   };
@@ -468,9 +572,23 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
                   >
                     {m.text}
 
-                    {/* Listen to Voice Reply Button for Assistant */}
+                    {/* Action Buttons: View on Hotspot Map + Listen Audio */}
                     {!isUser && (
-                      <div className="mt-2 pt-1.5 border-t border-[#e4d8c5]/70 flex items-center justify-end">
+                      <div className="mt-2 pt-1.5 border-t border-[#e4d8c5]/70 flex items-center justify-between gap-2">
+                        {m.transfer_id && onFocusTransfer ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onFocusTransfer(m.transfer_id);
+                            }}
+                            className="flex items-center gap-1.5 text-[11px] font-bold text-orange-700 hover:text-white bg-white hover:bg-orange-600 border border-orange-300 px-2.5 py-1 rounded-lg transition-all shadow-2xs"
+                          >
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span>View on Hotspot Map</span>
+                          </button>
+                        ) : <div />}
+
+                        {/* Listen to Voice Reply Button for Assistant */}
                         <button
                           type="button"
                           onClick={() => speakText(m.text, idx)}

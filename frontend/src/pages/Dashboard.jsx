@@ -5,6 +5,7 @@ import BatchScanner from '../components/BatchScanner';
 import ModelInfo from '../components/ModelInfo';
 import AuditLog from '../components/AuditLog';
 import DatasetAuditor from '../components/DatasetAuditor';
+import HotspotMap from '../components/HotspotMap';
 import { Shield, Sparkles, Layers, Sliders, ArrowUpRight, Cpu } from 'lucide-react';
 
 export default function Dashboard({ 
@@ -16,7 +17,10 @@ export default function Dashboard({
   onTransactionEvaluated, 
   onBatchEvaluated,
   onClearLogs,
-  onSeedSampleLogs
+  onSeedSampleLogs,
+  focusedTransferId = null,
+  onClearFocus = null,
+  onSelectTransferForForm = null
 }) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -74,6 +78,15 @@ export default function Dashboard({
       {/* Tab: Dataset Auditor & 284,807 Duplicate Finder */}
       {activeTab === 'dataset' && (
         <DatasetAuditor />
+      )}
+
+      {/* Tab: Credit Card Transfer Hotspot Map */}
+      {activeTab === 'hotspots' && (
+        <HotspotMap 
+          focusedTransferId={focusedTransferId}
+          onClearFocus={onClearFocus}
+          onSelectTransferForForm={onSelectTransferForForm}
+        />
       )}
 
       {/* Tab 2: Batch Scanner */}

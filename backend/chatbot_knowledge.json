@@ -98,5 +98,15 @@
     "keywords": ["duplicate", "duplicates", "find duplicate", "find duplicates", "duplicate records", "284807 duplicates", "duplicate in dataset"],
     "question": "How many duplicate records are in the 284,807 dataset and what are they?",
     "answer": "🔍 Duplicate Analysis on 284,807 Transactions (creditcard.csv):\n• Total Dataset Records: 284,807\n• Total Duplicates Identified: 1,081 duplicate rows across all 31 features\n• Fraud Duplicates: 19 records (e.g. repeated $1.00 carding bot replay attacks at Time 68207)\n• Legitimate Duplicates: 1,062 records (e.g. repeated $7.56 gateway retry attempts at Time 163152, repeated up to 18 times)\n• Deduplicated Clean Training Set: 283,726 unique transactions\n• Prevention of Data Leakage: Deduplication ensures identical transactions do not appear in both train and test splits, guaranteeing legitimate 85.11% recall.\n\nYou can also explore all duplicate clusters visually in the 'Dataset (284,807)' tab on the navigation bar!"
+  },
+  {
+    "keywords": ["hotspot", "hotspots", "map", "locate transfer", "locate", "geospatial", "transfer location"],
+    "question": "How does the Hotspot Map locate credit card transfers?",
+    "answer": "🗺️ Geospatial Machine Learning Hotspot Radar:\n• Global Financial Corridors: FraudShield tracks card transfer routing between origin cardholders and destination merchant clearing nodes across Europe, North America, Asia-Pacific, and offshore tax hubs.\n• ML Hotspot Clustering: Aggregates transfer frequency, fraud velocity, and latent anomaly vectors (V14, V4, V12) to detect crimson fraud hotspots.\n• Transit Velocity Engine: Uses the great-circle Haversine formula to calculate the exact km/h velocity between consecutive card authorizations.\n• Real-Time Location: You can explore transfer vectors, view distance and velocity, and click any node to open its complete transaction dossier in the 'Hotspot Map' tab!"
+  },
+  {
+    "keywords": ["impossible travel", "velocity anomaly", "speed anomaly", "transit velocity"],
+    "question": "What is Impossible Travel velocity in credit card fraud?",
+    "answer": "⚡ Impossible Travel Anomaly Detection:\nImpossible Travel occurs when two consecutive card transactions or authorization probes are geographically separated by a distance that cannot be traversed given the elapsed time window (transit velocity exceeding 900 km/h, the speed of commercial aircraft).\n\nFor example, if a card is used in London at 14:00, and an online wire or card-not-present transfer is initiated from Lagos, Nigeria 8 minutes later (4,700 km apart), the velocity is over 35,000 km/h. FraudShield's ML pipeline immediately flags this as an Impossible Travel anomaly and blocks the transfer."
   }
 ]

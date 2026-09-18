@@ -53,11 +53,17 @@ export default function App() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'batch' | 'model' | 'audit' | 'assistant'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'dataset' | 'hotspots' | 'batch' | 'model' | 'audit' | 'assistant'
+  const [focusedTransferId, setFocusedTransferId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authView, setAuthView] = useState('login'); // 'login' | 'register'
+
+  const handleFocusTransfer = (transferId) => {
+    setFocusedTransferId(transferId);
+    setActiveTab('hotspots');
+  };
 
   // Audit Logs State
   const [logs, setLogs] = useState(() => {
@@ -212,15 +218,18 @@ export default function App() {
           onBatchEvaluated={handleBatchEvaluated}
           onClearLogs={handleClearLogs}
           onSeedSampleLogs={handleSeedSampleLogs}
+          focusedTransferId={focusedTransferId}
+          onClearFocus={() => setFocusedTransferId(null)}
         />
       </main>
 
-      {/* Floating Chatbot Assistant Widget with Dataset Analytics */}
+      {/* Floating Chatbot Assistant Widget with Dataset Analytics & Transfer Locator */}
       <Chatbot 
         isOpen={isChatOpen} 
         setIsOpen={setIsChatOpen} 
         logs={logs}
         onDatasetUploaded={(newRows) => setLogs(prev => [...newRows, ...prev])}
+        onFocusTransfer={handleFocusTransfer}
       />
 
       {/* Optional Auth Modal (Sign In / Register) */}

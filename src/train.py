@@ -30,6 +30,7 @@ from src.evaluate import (
     plot_pr_curve,
     plot_model_comparison
 )
+from src.geospatial_ml import GeospatialHotspotDetector
 
 
 class BalancedLogisticRegression:
@@ -273,6 +274,11 @@ def train_and_evaluate_all():
             "feature_columns": prep.feature_columns
         }, f, indent=2)
     print(f"[Export] Metrics saved to '{metrics_json_path}'")
+
+    # 7. Geospatial Hotspot & Transit Velocity Machine Learning
+    print("\n[Geospatial ML] Computing international card transfer hotspots & velocity anomalies...")
+    hotspot_detector = GeospatialHotspotDetector(data_path="data/creditcard.csv", random_state=42)
+    hotspot_detector.generate_and_export()
 
     print("\n" + "=" * 68)
     print("ALL MODELS TRAINED, BENCHMARKED, AND SERIALIZED SUCCESSFULLY!")
