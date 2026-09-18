@@ -65,3 +65,56 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #ea580c;
 }
+
+/* Custom styling for Leaflet Fintech Location Map */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #141210;
+  font-family: 'Inter', system-ui, sans-serif;
+  z-index: 10;
+}
+
+.fintech-popup .leaflet-popup-content-wrapper {
+  background: #1c1917;
+  color: #f4ede2;
+  border: 1px solid #44403c;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  padding: 4px;
+}
+
+.fintech-popup .leaflet-popup-tip {
+  background: #1c1917;
+}
+
+.fintech-marker-pulse {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fintech-marker-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.75;
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.fintech-marker-dot {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+
