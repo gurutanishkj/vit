@@ -113,6 +113,26 @@ def get_current_user(
     return user
 
 
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    Dependency that returns the authenticated User if valid token is provided,
+    or None if caller is an unauthenticated guest.
+    """
+    if not credentials or not credentials.credentials:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if not email:
+            return None
+        return db.query(User).filter(User.email == email).first()
+    except Exception:
+        return None
+
+
 # -------------------------------------------------------------
 # Request / Response Schemas
 # -------------------------------------------------------------
@@ -189,6 +209,31 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password."
         )
+
+    token = create_access_token(data={"sub": user.email, "uid": user.id, "name": user.name})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user
+    }
+
+
+@auth_router.post("/guest", response_model=AuthResponse)
+def guest_login(db: Session = Depends(get_db)):
+    """
+    Issues a Guest Analyst session token for instant control and evaluation without registration.
+    """
+    guest_email = "guest@fraudshield.local"
+    user = db.query(User).filter(User.email == guest_email).first()
+    if not user:
+        user = User(
+            name="Guest Security Analyst",
+            email=guest_email,
+            hashed_password=hash_password(secrets.token_hex(16))
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     token = create_access_token(data={"sub": user.email, "uid": user.id, "name": user.name})
     return {

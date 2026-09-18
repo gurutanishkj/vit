@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from backend.prediction import predict_transaction_risk, get_model_bundle
-from backend.auth import auth_router, get_current_user
+from backend.auth import auth_router, get_current_user, get_optional_user
 from backend.models import User
 
 app = FastAPI(
@@ -69,6 +69,7 @@ if os.path.exists(DIST_DIR):
 class TransactionInput(BaseModel):
     Amount: float = Field(..., description="Transaction amount in currency units", ge=0.0)
     Time: Optional[float] = Field(0.0, description="Time in seconds from day start (0 to 86400)")
+    threshold: Optional[float] = Field(0.70, description="Custom detection sensitivity threshold (0.05 - 0.95)")
     V1: Optional[float] = 0.0
     V2: Optional[float] = 0.0
     V3: Optional[float] = 0.0
@@ -99,6 +100,11 @@ class TransactionInput(BaseModel):
     V28: Optional[float] = 0.0
 
 
+class BatchTransactionInput(BaseModel):
+    transactions: list[TransactionInput]
+    threshold: Optional[float] = 0.70
+
+
 # -------------------------------------------------------------
 # Routes
 # -------------------------------------------------------------
@@ -125,30 +131,98 @@ def health_check():
         }
 
 
+@app.get("/system-stats")
+def get_system_stats():
+    """Returns runtime system stats and control metrics."""
+    try:
+        bundle = get_model_bundle()
+        return {
+            "status": "operational",
+            "model_name": bundle.get("model_name", "Balanced Logistic Regression"),
+            "features_count": len(bundle.get("feature_columns", [])),
+            "dataset_rows": 283726,
+            "test_holdout_size": 56744,
+            "default_threshold": 0.70,
+            "latency_ms": "< 10ms",
+            "engine": "Cost-Sensitive Pure NumPy ML",
+            "hackathon": "Code Cortex 3.0 • VIT Vellore"
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 @app.post("/predict")
 def predict(transaction: TransactionInput, current_user: User = Depends(get_current_user)):
     """
-    Predicts whether a financial transaction is LEGITIMATE or FRAUD.
-    Output:
-    {
-      "prediction": "FRAUD",
-      "fraud_probability": 0.92,
-      "risk_level": "HIGH"
-    }
+    Predicts whether a financial transaction is LEGITIMATE, REVIEW, or FRAUD.
+    Accepts user-controlled threshold to adjust sensitivity dynamically.
+    Protected by JWT Bearer Authentication (Guest or Registered Analyst).
     """
     try:
         data_dict = transaction.model_dump()
-        result = predict_transaction_risk(data_dict)
+        thresh = transaction.threshold if transaction.threshold is not None else 0.70
+        result = predict_transaction_risk(data_dict, threshold=thresh)
         return {
             "prediction": result["prediction"],
             "fraud_probability": result["fraud_probability"],
             "risk_level": result["risk_level"],
+            "recommended_action": result.get("recommended_action", "Approve"),
+            "threshold_used": result.get("threshold_used", thresh),
             "model_used": result["model_used"],
             "top_factors": result["top_factors"],
-            "transaction_details": result["transaction_details"]
+            "transaction_details": result["transaction_details"],
+            "authenticated": True,
+            "analyst": current_user.name
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+
+@app.post("/batch-predict")
+def batch_predict(batch: BatchTransactionInput, current_user: User = Depends(get_current_user)):
+    """
+    Evaluates multiple transactions in a single batch pass.
+    """
+    try:
+        results = []
+        high_count = 0
+        medium_count = 0
+        low_count = 0
+        total_amount = 0.0
+
+        for idx, t in enumerate(batch.transactions):
+            data_dict = t.model_dump()
+            thresh = t.threshold if t.threshold is not None else (batch.threshold or 0.70)
+            res = predict_transaction_risk(data_dict, threshold=thresh)
+            total_amount += float(t.Amount)
+            if res["risk_level"] == "HIGH":
+                high_count += 1
+            elif res["risk_level"] == "MEDIUM":
+                medium_count += 1
+            else:
+                low_count += 1
+            results.append({
+                "id": idx + 1,
+                "amount": t.Amount,
+                "prediction": res["prediction"],
+                "fraud_probability": res["fraud_probability"],
+                "risk_level": res["risk_level"],
+                "recommended_action": res.get("recommended_action", "Approve"),
+                "top_factor": res["top_factors"][0]["feature"] if res["top_factors"] else "Amount"
+            })
+
+        return {
+            "total_scanned": len(results),
+            "fraud_count": high_count,
+            "review_count": medium_count,
+            "legitimate_count": low_count,
+            "total_volume": round(total_amount, 2),
+            "threshold_applied": batch.threshold or 0.70,
+            "results": results,
+            "analyst": current_user.name if current_user else "Guest Analyst"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Batch prediction error: {str(e)}")
 
 
 @app.get("/model-info")

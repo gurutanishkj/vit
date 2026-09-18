@@ -75,35 +75,44 @@ def predict_transaction_risk(transaction_data: dict, threshold: float = 0.70) ->
     probs = model.predict_proba(X)
     fraud_prob = float(probs[0, 1])
 
-    # 3. Categorize Risk Level based on Documented Thresholds
-    if fraud_prob < 0.30:
+    # 3. Categorize Risk Level based on User-Controlled Threshold
+    # Active threshold T defines the Fraud cutoff
+    T = float(np.clip(threshold, 0.05, 0.95))
+    low_cutoff = round(min(0.30, T * 0.5), 3)
+
+    if fraud_prob < low_cutoff:
         risk_level = "LOW"
         prediction = "LEGITIMATE"
-    elif fraud_prob < 0.70:
+        recommended_action = "Approve Automatically"
+    elif fraud_prob < T:
         risk_level = "MEDIUM"
-        prediction = "LEGITIMATE"
+        prediction = "REVIEW"
+        recommended_action = "Step-up 2FA Challenge"
     else:
         risk_level = "HIGH"
         prediction = "FRAUD"
+        recommended_action = "Decline & Flag Transaction"
 
     # 4. Feature Attribution / Explainability
     top_factors = []
     if hasattr(model, "weights") and model.weights is not None:
         contributions = X[0] * model.weights
-        top_indices = np.argsort(-np.abs(contributions))[:3]
+        top_indices = np.argsort(-np.abs(contributions))[:4]
         for idx in top_indices:
             feat_name = feature_cols[idx]
             impact_val = float(contributions[idx])
             top_factors.append({
                 "feature": feat_name,
                 "impact": round(impact_val, 3),
-                "direction": "Elevated Risk" if impact_val > 0 else "Reduced Risk"
+                "direction": "Elevates Risk" if impact_val > 0 else "Protects Transaction"
             })
 
     return {
         "prediction": prediction,
         "fraud_probability": round(fraud_prob, 4),
         "risk_level": risk_level,
+        "recommended_action": recommended_action,
+        "threshold_used": round(T, 2),
         "model_used": bundle.get("model_name", "Trained ML Model"),
         "top_factors": top_factors,
         "transaction_details": {

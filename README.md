@@ -30,6 +30,13 @@
    - Powered by a local knowledge base (`backend/chatbot_knowledge.json`) with zero external LLM dependencies.
    - Quick prompt chips for instant answers to core fraud concepts (Recall, ROC-AUC, Risk Scores, System Architecture).
 
+5. **Interactive Control Center & Batch Scanner**:
+   - Real-time fraud threshold sensitivity slider (10% to 95%) with dynamic risk recalibration.
+   - Granular sliders for Amount, 24-hour time cycle, and dominant fraud vectors (V14, V4, V12, V10, V17).
+   - Multi-transaction Batch Scanner with summary risk KPIs and CSV audit download.
+   - Live Transaction Audit Ledger tracking all evaluations in real-time.
+   - Zero-barrier Guest Analyst mode + secure authenticated analyst login.
+
 ---
 
 ## 📊 Dataset & Model Architecture
