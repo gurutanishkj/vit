@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   MessageSquare, Send, X, Bot, User, Sparkles, Paperclip, 
-  FileText, UploadCloud, CheckCircle2, AlertTriangle, ShieldAlert, BarChart2
+  FileText, UploadCloud, CheckCircle2, AlertTriangle, ShieldAlert, BarChart2,
+  Volume2, VolumeX
 } from 'lucide-react';
 import localKB from '../chatbot_knowledge.json';
 import datasetStats from '../dataset_stats.json';
@@ -98,6 +99,15 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(() => {
+    try {
+      return localStorage.getItem('fraudshield_voice_enabled') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [speakingIndex, setSpeakingIndex] = useState(null);
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -117,6 +127,77 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen]);
+
+  // Clean markdown and non-phonetic characters for speech synthesis
+  const cleanTextForSpeech = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/[*_#`~]/g, '')
+      .replace(/[•■▪]/g, '')
+      .replace(/[━─═-]{3,}/g, '')
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, '') // Remove emojis
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const speakText = (text, idx = null) => {
+    if (!('speechSynthesis' in window)) return;
+
+    if (speakingIndex === idx && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const clean = cleanTextForSpeech(text);
+    if (!clean) return;
+
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find(v => (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Jenny') || v.name.includes('Zira')) && v.lang.startsWith('en')) || voices.find(v => v.lang.startsWith('en'));
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    utterance.onstart = () => {
+      setSpeakingIndex(idx);
+    };
+    utterance.onend = () => {
+      setSpeakingIndex(null);
+    };
+    utterance.onerror = () => {
+      setSpeakingIndex(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleVoice = () => {
+    const next = !isVoiceEnabled;
+    setIsVoiceEnabled(next);
+    try {
+      localStorage.setItem('fraudshield_voice_enabled', String(next));
+    } catch {
+      // ignore
+    }
+    if (!next && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setSpeakingIndex(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setSpeakingIndex(null);
+    setIsOpen(false);
+  };
 
   const handleSend = async (messageText = null) => {
     const query = messageText || input.trim();
@@ -143,8 +224,12 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
     } catch {
       replyText = findLocalAnswer(query, logs);
     } finally {
-      setMessages((prev) => [...prev, { role: 'assistant', text: replyText || findLocalAnswer(query, logs) }]);
+      const finalReply = replyText || findLocalAnswer(query, logs);
+      setMessages((prev) => [...prev, { role: 'assistant', text: finalReply }]);
       setLoading(false);
+      if (isVoiceEnabled) {
+        speakText(finalReply, messages.length + 1);
+      }
     }
   };
 
@@ -311,17 +396,34 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
               <div>
                 <h3 className="text-sm font-bold leading-tight">FraudShield AI Data Assistant</h3>
                 <span className="text-[10px] text-orange-100 font-medium block">
-                  ML Dataset Analytics • Instant File Scanner
+                  ML Dataset Analytics • Voice Enabled
                 </span>
               </div>
             </div>
 
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              {/* Voice Output Toggle */}
+              <button
+                type="button"
+                onClick={toggleVoice}
+                className={`p-1.5 rounded-lg transition-all ${
+                  isVoiceEnabled 
+                    ? 'text-white bg-white/20 hover:bg-white/30' 
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                }`}
+                title={isVoiceEnabled ? "Voice Output Active (Click to Mute)" : "Voice Output Muted (Click to Enable)"}
+              >
+                {isVoiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Quick Question Chips */}
@@ -365,6 +467,34 @@ export default function Chatbot({ isOpen, setIsOpen, logs = [], onDatasetUploade
                     }`}
                   >
                     {m.text}
+
+                    {/* Listen to Voice Reply Button for Assistant */}
+                    {!isUser && (
+                      <div className="mt-2 pt-1.5 border-t border-[#e4d8c5]/70 flex items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={() => speakText(m.text, idx)}
+                          title={speakingIndex === idx ? "Stop Audio" : "Listen to Voice Reply"}
+                          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md transition-all ${
+                            speakingIndex === idx
+                              ? 'text-orange-700 bg-orange-200 animate-pulse'
+                              : 'text-[#78716c] hover:text-orange-700 hover:bg-white/80'
+                          }`}
+                        >
+                          {speakingIndex === idx ? (
+                            <>
+                              <VolumeX className="w-3 h-3 text-orange-700" />
+                              <span>Stop</span>
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="w-3 h-3 text-orange-600" />
+                              <span>Listen</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
