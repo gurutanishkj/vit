@@ -1,0 +1,77 @@
+[
+  {
+    "keywords": ["what is fraudshield", "about fraudshield", "overview", "who are you"],
+    "question": "What is FraudShield?",
+    "answer": "FraudShield is a machine-learning-based financial fraud detection system that analyzes transaction data and predicts whether a transaction is likely to be legitimate or fraudulent."
+  },
+  {
+    "keywords": ["how does fraudshield detect fraud", "how it works", "detect fraud", "detection mechanism"],
+    "question": "How does FraudShield detect fraud?",
+    "answer": "FraudShield uses a machine learning model trained on the provided financial transaction dataset. The model learns patterns from historical transactions and produces a fraud prediction and probability for a new transaction."
+  },
+  {
+    "keywords": ["what is fraud detection", "define fraud detection", "fraud meaning"],
+    "question": "What is fraud detection?",
+    "answer": "Fraud detection is the process of identifying financial transactions that may be unauthorized, suspicious, or fraudulent."
+  },
+  {
+    "keywords": ["what does fraud probability mean", "fraud probability", "probability meaning"],
+    "question": "What does fraud probability mean?",
+    "answer": "Fraud probability represents the model's estimated probability that a transaction belongs to the fraudulent class. It should be interpreted as a model output, not as absolute proof of fraud."
+  },
+  {
+    "keywords": ["what does high risk mean", "high risk", "risk level", "risk score"],
+    "question": "What does HIGH risk mean?",
+    "answer": "HIGH risk means the model's predicted fraud probability is above the configured high-risk threshold (70%+). The result should be reviewed rather than treated as definitive proof of fraud."
+  },
+  {
+    "keywords": ["what is precision", "precision"],
+    "question": "What is precision?",
+    "answer": "Precision measures how many transactions predicted as fraudulent were actually fraudulent. In FraudShield, our calibrated model achieves 25.97% precision on rare minority frauds."
+  },
+  {
+    "keywords": ["what is recall", "recall", "catch rate"],
+    "question": "What is recall?",
+    "answer": "Recall measures how many of the actual fraudulent transactions were successfully identified by the model. FraudShield achieves an exceptional 85.11% recall on holdout test transactions (80 out of 94 frauds caught)."
+  },
+  {
+    "keywords": ["what is f1 score", "f1 score", "f1"],
+    "question": "What is F1 score?",
+    "answer": "F1 score combines precision and recall into a single metric (the harmonic mean) and is useful when evaluating classification performance on imbalanced datasets."
+  },
+  {
+    "keywords": ["what is roc-auc", "roc auc", "roc-auc", "auc"],
+    "question": "What is ROC-AUC?",
+    "answer": "ROC-AUC measures how well the model distinguishes between fraudulent and legitimate transactions across different classification thresholds. FraudShield achieves an outstanding ROC-AUC of 0.9808."
+  },
+  {
+    "keywords": ["why is accuracy not enough", "accuracy misleading", "accuracy"],
+    "question": "Why is accuracy not enough for fraud detection?",
+    "answer": "Fraud datasets can be highly imbalanced (99.83% legitimate transactions). A naive model predicting all transactions as legitimate would achieve 99.83% accuracy while missing 100% of frauds, so precision, recall, F1 score, and ROC-AUC are also important."
+  },
+  {
+    "keywords": ["what api does fraudshield use", "api", "backend", "fastapi"],
+    "question": "What API does FraudShield use?",
+    "answer": "FraudShield uses a FastAPI backend. The backend provides authentication (/auth), fraud prediction (/predict), model information (/model-info), and chatbot (/chat) endpoints."
+  },
+  {
+    "keywords": ["can the chatbot decide", "decide fraud", "can you predict"],
+    "question": "Can the chatbot decide whether a transaction is fraudulent?",
+    "answer": "No. The chatbot explains the FraudShield system and fraud detection concepts. Actual transaction predictions come from the trained machine learning model through the prediction API (/predict)."
+  },
+  {
+    "keywords": ["is my password stored directly", "password stored", "security", "hash"],
+    "question": "Is my password stored directly?",
+    "answer": "No. Passwords are never stored in plain text. They are securely hashed using PBKDF2-HMAC-SHA256 with cryptographically random salts before being stored in SQLite."
+  },
+  {
+    "keywords": ["what does the dashboard show", "dashboard", "features of dashboard"],
+    "question": "What does the dashboard show?",
+    "answer": "The dashboard provides transaction analysis, fraud prediction results, model performance information, and access to the FraudShield Assistant."
+  },
+  {
+    "keywords": ["dataset", "rows", "transactions count"],
+    "question": "What dataset was used to train FraudShield?",
+    "answer": "FraudShield was trained on the European credit card transactions dataset containing 283,726 unique transactions with 30 numerical features (Time, Amount, and V1 to V28 PCA components) and 0 missing values."
+  }
+]

@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Database
+*.db
+*.sqlite3
+backend/fraudshield.db
+
+# Frontend dependencies and builds
+node_modules/
+dist/
+build/
+.cache/
+
+# Large Datasets and Models
+data/*.csv
+!data/README.md
+*.joblib
+
+# IDE & Notebook Checkpoints
+.ipynb_checkpoints/
+.vscode/
+.idea/
